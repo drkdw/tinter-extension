@@ -320,9 +320,12 @@ code {
     transform: translateY(0);
 }
 
-/* Footer / Buy Me a Coffee */
+/* Footer */
 footer {
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
     padding: 16px 0 4px;
 }
 
@@ -334,5 +337,20 @@ footer {
 }
 
 #bmc-link:hover img {
+    opacity: 1;
+}
+
+#github-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 13px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+#github-link:hover {
     opacity: 1;
 }
