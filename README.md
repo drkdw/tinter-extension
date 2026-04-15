@@ -13,6 +13,12 @@ and CSS variables from any hex color. No account needed, works offline
 - Color names via the Color API
 - Dark / light / system theme
 
+## Screenshots
+
+| Light | Dark |
+|-------|------|
+| ![Tinter light mode](screenshots/light-palette.png) | ![Tinter dark mode](screenshots/dark-palette.png) |
+
 ## How to install (developer mode)
 
 The extension is not listed in the Chrome Web Store. You can install it
