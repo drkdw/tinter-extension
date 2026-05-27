@@ -146,15 +146,25 @@ document.addEventListener("DOMContentLoaded", function () {
         };
     };
 
+    // Pick black or white text for best contrast, using WCAG relative luminance
+    // (gamma-corrected). Threshold 0.179 is the WCAG break-even point vs. black/white.
+    const contrastTextColor = ({ r, g, b }) => {
+        const channel = (c) => {
+            const s = c / 255;
+            return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+        };
+        const luminance = 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+        return luminance > 0.179 ? "#000000" : "#FFFFFF";
+    };
+
     const processColor = (hsl) => {
         const rgb = hslToRgb(hsl.h, hsl.s, hsl.l);
         const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
-        const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
         return {
             hex,
             rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
             hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
-            textColor: luminance > 0.5 ? "#000000" : "#FFFFFF",
+            textColor: contrastTextColor(rgb),
         };
     };
 
@@ -234,7 +244,6 @@ document.addEventListener("DOMContentLoaded", function () {
             const clampedLightness = Math.max(0, Math.min(100, tint.lightness));
             const newRgb = tint.tint === "1000" ? rgb : hslToRgb(hsl.h, hsl.s, clampedLightness);
             const hex = tint.tint === "1000" ? baseColor : rgbToHex(newRgb.r, newRgb.g, newRgb.b);
-            const luminance = (0.299 * newRgb.r + 0.587 * newRgb.g + 0.114 * newRgb.b) / 255;
 
             return {
                 tint: tint.tint,
@@ -242,7 +251,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 rgb: `rgb(${newRgb.r}, ${newRgb.g}, ${newRgb.b})`,
                 hsl: `hsl(${hsl.h}, ${hsl.s}%, ${clampedLightness}%)`,
                 type: tint.type,
-                textColor: luminance > 0.5 ? "#000000" : "#FFFFFF",
+                textColor: contrastTextColor(newRgb),
             };
         });
     };
@@ -286,8 +295,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     };
 
-    const generateCSS = (baseColor, name = "color") => {
-        const colors = getTintedColors(baseColor);
+    const generateCSS = (colors, name = "color") => {
         const colorNameKebab = name.toLowerCase().replace(/[^a-z0-9]+/g, "-");
         let css = `/* CSS variables for ${name} and its tints */\n:root {\n`;
 
@@ -310,7 +318,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const createColorCard = (color, name) => {
         if (color.type === "separator") {
-            return `<div class="color-separator"><h2>${color.name}</h2></div>`;
+            return `<div class="color-separator"><h2>${escapeHtml(color.name)}</h2></div>`;
         }
 
         const label = color.type === "suggestion" ? color.name : `Tint ${color.tint}`;
@@ -511,7 +519,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 combinations.map(createCombinationCard).join("") +
                 `</div>`;
 
-            cssOutput.textContent = generateCSS(color, mainColorName || "color");
+            cssOutput.textContent = generateCSS(tints, mainColorName || "color");
             colorPreview.innerHTML = tintElements.join("");
             outputContainer.style.display = "block";
 
@@ -560,7 +568,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const type = button.dataset.type;
         const colorName = button
             .closest(".color-card")
-            ?.querySelector(".color-name")
+            ?.querySelector(".color-title")
             ?.textContent;
 
         if (color && type) {
