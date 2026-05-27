@@ -6,7 +6,7 @@
     --border-color: #ddd;
     --pre-bg: #f8f9fa;
     --copy-hover-bg: #f5f5f5;
-    --success-color: #5cb85c;
+    --success-color: #2e7d32;
     --box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     --border-radius: 5px;
     --transition-duration: 0.3s;
@@ -166,7 +166,7 @@ header p {
     font-size: 15px;
 }
 
-#css-output-container h2 .color-name {
+#css-output-container h2 .card-subtitle {
     color: var(--muted-color);
     font-weight: normal;
     font-size: 0.9em;
@@ -230,7 +230,7 @@ code {
     font-weight: bold;
 }
 
-.color-name {
+.card-subtitle {
     font-size: 11px;
     color: var(--muted-color);
     display: block;
@@ -375,16 +375,17 @@ code {
     left: 50%;
     transform: translateX(-50%);
     z-index: 1000;
-    white-space: nowrap;
+    max-width: calc(100% - 40px);
 }
 
 .toast {
     background-color: var(--success-color);
-    color: var(--secondary-color);
+    color: #ffffff;
     padding: 10px 18px;
     border-radius: var(--border-radius);
     box-shadow: var(--box-shadow);
     font-size: 13px;
+    text-align: center;
     opacity: 0;
     transform: translateY(100%);
     transition: opacity 0.3s, transform 0.3s;

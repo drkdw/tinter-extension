@@ -164,7 +164,6 @@ document.addEventListener("DOMContentLoaded", function () {
             hex,
             rgb: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`,
             hsl: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)`,
-            textColor: contrastTextColor(rgb),
         };
     };
 
@@ -334,7 +333,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 <div class="color-card-header">
                     <div>
                         <span class="color-title">${escapeHtml(primary)}</span>
-                        ${secondary ? `<span class="color-name">${escapeHtml(secondary)}</span>` : ""}
+                        ${secondary ? `<span class="card-subtitle">${escapeHtml(secondary)}</span>` : ""}
                     </div>
                     <div class="color-buttons">
                         <button class="copy-button" data-color="${color.hex}" data-type="HEX">
@@ -484,7 +483,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Colour name first (prominent), "Generated CSS" as the muted label.
                 cssTitle.textContent = mainColorName + " ";
                 const labelSpan = document.createElement("span");
-                labelSpan.className = "color-name";
+                labelSpan.className = "card-subtitle";
                 labelSpan.textContent = "Generated CSS";
                 cssTitle.appendChild(labelSpan);
             } else {
