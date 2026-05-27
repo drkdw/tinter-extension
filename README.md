@@ -8,6 +8,8 @@ and CSS variables from any hex color. No account needed, works offline
 
 - 20 variants per color: 10 lighter (100–1000) and 10 darker (1100–2000)
 - Color harmonies: complementary, analogous, triadic
+- Combination examples: two-tone cards showing how a color pairs with its
+  complementary, triadic and split-complementary partners
 - Copy individual colors in HEX, RGB, or HSL
 - Copy ready-to-use CSS custom properties (variables)
 - Color names via the Color API
