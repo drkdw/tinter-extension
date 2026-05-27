@@ -47,6 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const outputContainer = document.getElementById("output-container");
     const cssOutput = document.getElementById("css-output");
     const colorPreview = document.getElementById("color-preview");
+    const comboContainer = document.getElementById("combo-container");
 
     // Color conversion utilities
     const hexToRgb = (hex) => {
@@ -221,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const lightness = hsl.l - ((hsl.l - 5) * (tintNumber - 1000)) / 1000;
                 return { tint: tintNumber.toString(), lightness: Math.round(lightness), type: "dark" };
             }),
-            { tint: "separator", type: "separator", name: "Suggested Color Combinations" },
+            { tint: "separator", type: "separator", name: "Suggested color combinations" },
             ...getSuggestedColors({ h: hsl.h, s: hsl.s, l: hsl.l }),
         ];
 
@@ -312,15 +313,20 @@ document.addEventListener("DOMContentLoaded", function () {
             return `<div class="color-separator"><h2>${color.name}</h2></div>`;
         }
 
-        const title = color.type === "suggestion" ? color.name : `Tint ${color.tint}`;
+        const label = color.type === "suggestion" ? color.name : `Tint ${color.tint}`;
         const cardClass = color.type === "suggestion" ? "suggestion-variant" : `${color.type}-variant`;
+
+        // The descriptive colour name is the prominent title; the tint/harmony label
+        // is the small subtitle. Fall back to the label when no name was found.
+        const primary = name || label;
+        const secondary = name ? label : "";
 
         return `
             <div class="color-card ${cardClass}">
                 <div class="color-card-header">
                     <div>
-                        <span class="color-title">${escapeHtml(title)}</span>
-                        ${name ? `<span class="color-name">${escapeHtml(name)}</span>` : ""}
+                        <span class="color-title">${escapeHtml(primary)}</span>
+                        ${secondary ? `<span class="color-name">${escapeHtml(secondary)}</span>` : ""}
                     </div>
                     <div class="color-buttons">
                         <button class="copy-button" data-color="${color.hex}" data-type="HEX">
@@ -347,6 +353,66 @@ document.addEventListener("DOMContentLoaded", function () {
             </div>
         `;
     };
+
+    // Combination showcase cards — illustrate how a colour pairs with a harmony
+    // partner. The name is rendered in the partner colour, like the reels examples.
+    const HARMONY_OFFSETS = [
+        { offset: 180, label: "Complementary" },
+        { offset: 120, label: "Triadic" },
+        { offset: 240, label: "Triadic" },
+        { offset: 150, label: "Split complementary" },
+    ];
+
+    const buildCombinations = (baseColor, baseName) => {
+        const baseRgb = hexToRgb(baseColor);
+        const baseHsl = rgbToHsl(baseRgb.r, baseRgb.g, baseRgb.b);
+        const baseIsLight = baseHsl.l >= 50;
+        // Push the partner to the opposite lightness pole so the pairing always reads well.
+        const partnerL = baseIsLight ? 22 : 88;
+        const partnerS = Math.max(45, Math.min(95, baseHsl.s));
+
+        const base = {
+            hex: rgbToHex(baseRgb.r, baseRgb.g, baseRgb.b),
+            rgb: `rgb(${baseRgb.r}, ${baseRgb.g}, ${baseRgb.b})`,
+            hsl: `hsl(${baseHsl.h}, ${baseHsl.s}%, ${baseHsl.l}%)`,
+            name: baseName,
+        };
+
+        return HARMONY_OFFSETS.map(({ offset, label }) => {
+            const h = (baseHsl.h + offset) % 360;
+            const pRgb = hslToRgb(h, partnerS, partnerL);
+            return {
+                label,
+                base,
+                partner: {
+                    hex: rgbToHex(pRgb.r, pRgb.g, pRgb.b),
+                    rgb: `rgb(${pRgb.r}, ${pRgb.g}, ${pRgb.b})`,
+                    hsl: `hsl(${h}, ${partnerS}%, ${partnerL}%)`,
+                    name: null,
+                },
+            };
+        });
+    };
+
+    const comboHalf = (bg, fg) => {
+        const btnStyle = `border-color: ${fg.hex}; color: ${fg.hex}`;
+        return `
+        <div class="combo-half" style="background-color: ${bg.hex}; color: ${fg.hex}">
+            <div class="combo-name">${escapeHtml(bg.name || bg.hex)}</div>
+            <div class="combo-buttons">
+                <button class="copy-button combo-copy" data-color="${bg.hex}" data-type="HEX" style="${btnStyle}">${copyIconSvg} HEX</button>
+                <button class="copy-button combo-copy" data-color="${bg.rgb}" data-type="RGB" style="${btnStyle}">${copyIconSvg} RGB</button>
+                <button class="copy-button combo-copy" data-color="${bg.hsl}" data-type="HSL" style="${btnStyle}">${copyIconSvg} HSL</button>
+            </div>
+        </div>`;
+    };
+
+    const createCombinationCard = ({ label, base, partner }) => `
+        <div class="combo-card">
+            <div class="combo-label">${escapeHtml(label)}</div>
+            ${comboHalf(base, partner)}
+            ${comboHalf(partner, base)}
+        </div>`;
 
     const showToast = (message) => {
         const toastContainer = document.getElementById("toast-container");
@@ -406,35 +472,44 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const cssTitle = document.querySelector("#css-output-container h2");
             if (mainColorName) {
-                // Build the element via DOM to avoid XSS with API-supplied data
-                cssTitle.textContent = "Generated CSS for ";
-                const nameSpan = document.createElement("span");
-                nameSpan.className = "color-name";
-                nameSpan.textContent = mainColorName;
-                cssTitle.appendChild(nameSpan);
+                // Build the element via DOM to avoid XSS with API-supplied data.
+                // Colour name first (prominent), "Generated CSS" as the muted label.
+                cssTitle.textContent = mainColorName + " ";
+                const labelSpan = document.createElement("span");
+                labelSpan.className = "color-name";
+                labelSpan.textContent = "Generated CSS";
+                cssTitle.appendChild(labelSpan);
             } else {
                 cssTitle.textContent = "Generated CSS";
             }
 
             const tints = getTintedColors(color);
 
-            // Only fetch names for the base tint (1000) and the 5 harmony suggestions —
-            // not for all 20 programmatic tints (that would be 26 API calls per click).
-            const nameLookupHexes = new Set();
-            tints.forEach((tint) => {
-                if (tint.type === "suggestion" && tint.hex) {
-                    nameLookupHexes.add(tint.hex.toUpperCase());
-                }
-            });
-            await Promise.all([...nameLookupHexes].map(fetchColorName));
-
-            const tintElements = tints.map((tint) => {
-                if (tint.type === "suggestion" && tint.hex) {
-                    const name = colorNameCache.get(tint.hex.replace("#", "").toUpperCase()) || null;
+            // Look up a name for every coloured tint. Calls run in parallel and are
+            // cached, so this stays fast even though it's one request per colour.
+            const tintElements = await Promise.all(
+                tints.map(async (tint) => {
+                    let name = null;
+                    if (tint.hex) {
+                        name = await fetchColorName(tint.hex);
+                    }
                     return createColorCard(tint, name);
-                }
-                return createColorCard(tint, null);
+                })
+            );
+
+            // Combination showcase: base colour paired with contrasting harmony partners.
+            const combinations = buildCombinations(color, mainColorName);
+            const partnerHexes = [...new Set(combinations.map((c) => c.partner.hex))];
+            await Promise.all(partnerHexes.map(fetchColorName));
+            combinations.forEach((c) => {
+                c.partner.name = colorNameCache.get(
+                    c.partner.hex.replace("#", "").toUpperCase()
+                ) || null;
             });
+            comboContainer.innerHTML =
+                `<h2>Combination examples</h2><div class="combo-grid">` +
+                combinations.map(createCombinationCard).join("") +
+                `</div>`;
 
             cssOutput.textContent = generateCSS(color, mainColorName || "color");
             colorPreview.innerHTML = tintElements.join("");

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Tinter - Color Palette Generator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Generate color shades, tints, and CSS variables from any hex color. Includes color harmonies: complementary, analogous, triadic.",
   "author": "Dirk De Wever",
   "icons": {

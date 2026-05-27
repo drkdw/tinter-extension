@@ -283,14 +283,89 @@ code {
 
 .color-separator {
     grid-column: 1 / -1;
-    text-align: center;
-    margin-top: 8px;
+    margin-top: 24px;
 }
 
 .color-separator h2 {
-    font-size: 14px;
     margin: 0;
+    font-size: 15px;
+}
+
+/* Combination Showcase */
+#combo-container {
+    margin-top: 24px;
+    margin-bottom: 16px;
+}
+
+#combo-container h2 {
+    margin: 0 0 12px 0;
+    font-size: 15px;
+}
+
+.combo-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.combo-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    box-shadow: var(--box-shadow);
+}
+
+.combo-label {
+    background-color: var(--card-bg);
     color: var(--muted-color);
+    font-size: 11px;
+    text-align: center;
+    padding: 6px 0;
+}
+
+.combo-half {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 22px 14px;
+    text-align: center;
+}
+
+.combo-name {
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -0.5px;
+    word-break: break-word;
+    margin-bottom: 14px;
+}
+
+.combo-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+.combo-copy {
+    padding: 4px 8px;
+    font-size: 11px;
+    gap: 4px;
+    background: transparent;
+}
+
+.combo-copy svg {
+    width: 12px;
+    height: 12px;
+}
+
+.combo-copy:hover {
+    opacity: 0.7;
+    background: transparent;
 }
 
 /* Toast Notification */
