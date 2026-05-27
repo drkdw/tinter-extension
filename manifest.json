@@ -21,7 +21,6 @@
     "default_title": "Tinter - Color Palette Generator"
   },
   "permissions": [
-    "tabs",
     "storage"
   ],
   "host_permissions": [

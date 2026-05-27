@@ -246,21 +246,39 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     };
 
+    // Sanitise strings before inserting them via innerHTML
+    const escapeHtml = (str) =>
+        String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
     const validateHexColor = (hex) => {
         const regex = /^#?([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
         return regex.test(hex);
     };
 
+    // Simple cache to avoid duplicate API calls across sessions within the same popup
+    const colorNameCache = new Map();
+
     const fetchColorName = async (hex) => {
+        const key = hex.replace("#", "").toUpperCase();
+        if (colorNameCache.has(key)) {
+            return colorNameCache.get(key);
+        }
         try {
             const response = await fetch(
-                `https://www.thecolorapi.com/id?hex=${hex.replace("#", "")}`
+                `https://www.thecolorapi.com/id?hex=${key}`
             );
             if (!response.ok) {
                 throw new Error("Network response was not ok");
             }
             const data = await response.json();
-            return data.name.value;
+            const name = data.name.value;
+            colorNameCache.set(key, name);
+            return name;
         } catch (error) {
             console.error("Error fetching color name:", error);
             return null;
@@ -301,8 +319,8 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="color-card ${cardClass}">
                 <div class="color-card-header">
                     <div>
-                        <span class="color-title">${title}</span>
-                        ${name ? `<span class="color-name">${name}</span>` : ""}
+                        <span class="color-title">${escapeHtml(title)}</span>
+                        ${name ? `<span class="color-name">${escapeHtml(name)}</span>` : ""}
                     </div>
                     <div class="color-buttons">
                         <button class="copy-button" data-color="${color.hex}" data-type="HEX">
@@ -388,26 +406,35 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const cssTitle = document.querySelector("#css-output-container h2");
             if (mainColorName) {
-                cssTitle.innerHTML = `Generated CSS for <span class="color-name">${mainColorName}</span>`;
+                // Build the element via DOM to avoid XSS with API-supplied data
+                cssTitle.textContent = "Generated CSS for ";
+                const nameSpan = document.createElement("span");
+                nameSpan.className = "color-name";
+                nameSpan.textContent = mainColorName;
+                cssTitle.appendChild(nameSpan);
             } else {
                 cssTitle.textContent = "Generated CSS";
             }
 
             const tints = getTintedColors(color);
 
-            const tintElements = await Promise.all(
-                tints.map(async (tint) => {
-                    try {
-                        let name = null;
-                        if (tint.hex) {
-                            name = await fetchColorName(tint.hex.replace("#", ""));
-                        }
-                        return createColorCard(tint, name);
-                    } catch (error) {
-                        return createColorCard(tint, null);
-                    }
-                })
-            );
+            // Only fetch names for the base tint (1000) and the 5 harmony suggestions —
+            // not for all 20 programmatic tints (that would be 26 API calls per click).
+            const nameLookupHexes = new Set();
+            tints.forEach((tint) => {
+                if (tint.type === "suggestion" && tint.hex) {
+                    nameLookupHexes.add(tint.hex.toUpperCase());
+                }
+            });
+            await Promise.all([...nameLookupHexes].map(fetchColorName));
+
+            const tintElements = tints.map((tint) => {
+                if (tint.type === "suggestion" && tint.hex) {
+                    const name = colorNameCache.get(tint.hex.replace("#", "").toUpperCase()) || null;
+                    return createColorCard(tint, name);
+                }
+                return createColorCard(tint, null);
+            });
 
             cssOutput.textContent = generateCSS(color, mainColorName || "color");
             colorPreview.innerHTML = tintElements.join("");
