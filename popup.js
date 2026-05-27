@@ -41,6 +41,12 @@ document.addEventListener("DOMContentLoaded", function () {
     initTheme();
     document.getElementById("theme-toggle").addEventListener("click", cycleTheme);
 
+    // Show the extension version (kept in sync with the manifest)
+    const versionEl = document.getElementById("app-version");
+    if (versionEl) {
+        versionEl.textContent = "v" + chrome.runtime.getManifest().version;
+    }
+
     // Get DOM elements
     const colorInput = document.getElementById("color-input");
     const generateButton = document.getElementById("generate-button");
